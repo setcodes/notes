@@ -3,46 +3,55 @@ import LeftPanel from './components/Layouts/LeftPanel/LeftPanel';
 import Body from './components/Layouts/Body/Body';
 import Header from './components/Header/Header';
 import JournalList from './components/JournalList/JournalList';
-import JournalItem from './components/JournalItem/JournalItem';
-import CardButton from './components/CardButton/CardButton';
 import JournaAddButton from './components/JournalAddButton/JournalAddButton';
+import JournalForm from './components/JournalForm/JournalForm';
+import { useEffect, useState } from 'react';
 
 function App() {
-	const data = [
-		{
-			title: 'Подготовка к обновлению курсов',
-			text: 'Горные походы открывают удивительные природные ландшафт',
-			date: new Date(),
-		},
-		{
-			title: 'Поход в годы',
-			text: 'Думал, что очень много времени',
-			date: new Date(),
-		},
-	];
+	const [items, setItems] = useState([]);
+
+	useEffect(() => {
+		const data = JSON.parse(localStorage.getItem('data'));
+		if (data) {
+			setItems(
+				data.map((item) => ({
+					...item,
+					date: new Date(item.date),
+				}))
+			);
+		}
+	}, []);
+
+	useEffect(() => {
+		if (items.length) {
+			localStorage.setItem('data', JSON.stringify(items));
+		}
+	}, [items]);
+
+	const addItem = (item) => {
+		setItems((oldItems) => [
+			...oldItems,
+			{
+				id:
+					oldItems.length > 0 ? Math.max(...oldItems.map((i) => i.id)) + 1 : 1,
+				title: item.title,
+				post: item.post,
+				date: new Date(item.date),
+			},
+		]);
+		console.log(items);
+	};
+
 	return (
 		<div className="app">
 			<LeftPanel>
 				<Header />
 				<JournaAddButton />
-				<JournalList>
-					<CardButton>
-						<JournalItem
-							title={data[0].title}
-							text={data[0].text}
-							date={data[0].date}
-						/>
-					</CardButton>
-					<CardButton>
-						<JournalItem
-							title={data[1].title}
-							text={data[1].text}
-							date={data[1].date}
-						/>
-					</CardButton>
-				</JournalList>
+				<JournalList items={items} />
 			</LeftPanel>
-			<Body>222</Body>
+			<Body>
+				<JournalForm onSubmit={addItem} />
+			</Body>
 		</div>
 	);
 }
