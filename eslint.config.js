@@ -35,7 +35,7 @@ export default [
 			],
 			quotes: ['error', 'single'],
 			'react/prop-types': [0],
-			indent: ['error', 'tab'],
+			// indent: ['error', tab],
 		},
 	},
 ];
