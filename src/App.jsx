@@ -5,37 +5,28 @@ import Header from './components/Header/Header';
 import JournalList from './components/JournalList/JournalList';
 import JournaAddButton from './components/JournalAddButton/JournalAddButton';
 import JournalForm from './components/JournalForm/JournalForm';
-import { useEffect, useState } from 'react';
+import { useLocalstorage } from './components/Hooks/use-localstorage.hook';
+import { UserContextProvider } from './components/context/user.context';
 
 function App() {
-	const [items, setItems] = useState([]);
+	const [items, setItems] = useLocalstorage('data');
 
-	useEffect(() => {
-		const data = JSON.parse(localStorage.getItem('data'));
-		if (data) {
-			setItems(
-				data.map((item) => ({
-					...item,
-					date: new Date(item.date),
-				}))
-			);
+	const mapItems = (items) => {
+		if (!items) {
+			return [];
 		}
-	}, []);
-
-	useEffect(() => {
-		if (items.length) {
-			localStorage.setItem('data', JSON.stringify(items));
-		}
-	}, [items]);
+		return items.map((i) => ({
+			...i,
+			date: new Date(i.date),
+		}));
+	};
 
 	const addItem = (item) => {
-		setItems((oldItems) => [
-			...oldItems,
+		setItems([
+			...mapItems(items),
 			{
-				id:
-					oldItems.length > 0 ? Math.max(...oldItems.map((i) => i.id)) + 1 : 1,
-				title: item.title,
-				post: item.post,
+				...item,
+				id: items?.length > 0 ? Math.max(...items.map((i) => i.id)) + 1 : 1,
 				date: new Date(item.date),
 			},
 		]);
@@ -43,16 +34,18 @@ function App() {
 	};
 
 	return (
-		<div className="app">
-			<LeftPanel>
-				<Header />
-				<JournaAddButton />
-				<JournalList items={items} />
-			</LeftPanel>
-			<Body>
-				<JournalForm onSubmit={addItem} />
-			</Body>
-		</div>
+		<UserContextProvider>
+			<div className="app">
+				<LeftPanel>
+					<Header />
+					<JournaAddButton />
+					<JournalList items={mapItems(items)} />
+				</LeftPanel>
+				<Body>
+					<JournalForm onSubmit={addItem} />
+				</Body>
+			</div>
+		</UserContextProvider>
 	);
 }
 
