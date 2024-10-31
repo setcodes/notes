@@ -6,7 +6,7 @@ import cn from 'classnames';
 import { formReducer, INITIAL_STATE } from './JournalForm.state';
 import { UserContext } from '../context/user.context';
 
-function JournalForm({ onSubmit }) {
+function JournalForm({ onSubmit, data, onDelete }) {
 	const [formState, dispatchForm] = useReducer(formReducer, INITIAL_STATE);
 	const { isFormValid, values, isFormReadyToSubmit } = formState;
 	const titleRef = useRef();
@@ -29,6 +29,10 @@ function JournalForm({ onSubmit }) {
 	};
 
 	useEffect(() => {
+		dispatchForm({ type: 'SET_VALUE', payload: { ...data } });
+	}, [data]);
+
+	useEffect(() => {
 		let timerID;
 		if (!isFormValid.title || !isFormValid.date || !isFormValid.post) {
 			focusValid(isFormValid);
@@ -45,8 +49,9 @@ function JournalForm({ onSubmit }) {
 		if (isFormReadyToSubmit) {
 			onSubmit(values);
 			dispatchForm({ type: 'CLEAR' });
+			dispatchForm({ type: 'SET_VALUE', payload: { userId } });
 		}
-	}, [isFormReadyToSubmit, values, onSubmit]);
+	}, [isFormReadyToSubmit, values, onSubmit, userId]);
 
 	useEffect(() => {
 		dispatchForm({ type: 'SET_VALUE', payload: { userId } });
@@ -64,11 +69,16 @@ function JournalForm({ onSubmit }) {
 		dispatchForm({ type: 'SUBMIT' });
 	};
 
+	const deleteJournalItem = () => {
+		onDelete(data.id);
+		dispatchForm({ type: 'CLEAR' });
+		dispatchForm({ type: 'SET_VALUE', payload: { userId } });
+	};
+
 	return (
 		<>
 			<form className={styles['journal-form']} onSubmit={addJournalItem}>
-				<div>{userId}</div>
-				<div>
+				<div className={styles['form-row']}>
 					<Input
 						type="text"
 						ref={titleRef}
@@ -78,6 +88,15 @@ function JournalForm({ onSubmit }) {
 						isFormValid={!isFormValid.title}
 						appearence="title"
 					/>
+					{data.id && (
+						<button
+							className={styles['delete']}
+							type="button"
+							onClick={deleteJournalItem}
+						>
+							<img src="./archive.svg" alt="delete" />
+						</button>
+					)}
 				</div>
 				<div className={styles['form-row']}>
 					<label htmlFor="date" className={styles['form-label']}>
@@ -89,7 +108,11 @@ function JournalForm({ onSubmit }) {
 						type="date"
 						ref={dateRef}
 						onChange={onChange}
-						value={values.date}
+						value={
+							values.date
+								? new Date(values.date).toISOString().slice(0, 10)
+								: ''
+						}
 						name="date"
 						isFormValid={!isFormValid.date}
 						appearence="text"
